@@ -50,3 +50,4 @@ monthly_expiries         = 2           ; Number of front-month serial monthly ex
 ws_queue_size            = 10000       ; Max size for internal asyncio.Queues
 ntp_max_offset_ms        = 100         ; Abort if local clock drift from NTP is greater than this
 log_level                = INFO        ; DEBUG, INFO, WARNING, ERROR, CRITICAL
+color_logging            = False       ; Enable ANSI color codes in console logs
