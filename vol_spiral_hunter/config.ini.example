@@ -1,0 +1,52 @@
+; Vol-Spiral Hunter V0.1 Configuration Example
+; Copy this to config.ini and fill in your values.
+; API Keys should be set as Environment Variables (e.g., BINANCE_API_KEY, DERIBIT_CLIENT_ID, INFLUXDB_TOKEN)
+; and will be loaded if referenced like ${ENV_VAR_NAME} (this simple script doesn't auto-expand them from .env into this file, your Python code does)
+
+[binance]
+; api_key loaded from environment variable BINANCE_API_KEY
+; api_secret loaded from environment variable BINANCE_API_SECRET
+symbols     = BTCUSDT,ETHUSDT        ; Comma-separated spot/perp symbols for Binance
+
+[deribit]
+; client_id loaded from environment variable DERIBIT_CLIENT_ID
+; client_secret loaded from environment variable DERIBIT_CLIENT_SECRET
+instruments_refresh_sec = 60         ; How often to refresh the list of Deribit option instruments
+deribit_perp_symbol = BTC-PERPETUAL  ; Perpetual futures symbol on Deribit
+
+[influxdb]
+url                = http://localhost:8086 ; Example: https://us-east-1-1.aws.cloud2.influxdata.com
+org                = your-org
+bucket             = vol_spiral
+; token loaded from environment variable INFLUXDB_TOKEN
+flush_interval_ms  = 500             ; Batch write metrics to InfluxDB every 0.5 seconds
+
+[metrics_params]
+; Microstructure Parameters
+qfr_levels               = 5           ; Top-N book levels to watch for QFR calculation
+qfr_window_sec           = 5           ; Rolling window for QFR calculation
+qfr_baseline_ema_sec     = 300         ; EMA period for QFR baseline
+qfr_sd_threshold         = 2.5         ; SD multiplier for QFR anomaly
+depth_pct_band           = 0.005       ; 0.5% from mid-price for depth sum calculation
+depth_baseline_ema_sec   = 300         ; EMA period for depth baseline
+depth_collapse_pct_threshold = 40      ; Percentage drop for depth collapse alert
+spread_baseline_ema_sec  = 60          ; EMA period for spread baseline
+spread_widen_pct_threshold = 200       ; Percentage widening for spread blowout alert (relative to baseline)
+aggression_window_sec    = 180         ; Rolling window for aggressive trade imbalance
+aggression_ratio_threshold = 0.75      ; Ratio (e.g., 75% of aggressive vol on one side) for imbalance alert
+price_accel_window_sec   = 10          ; Window for price velocity/acceleration
+
+; Implied Volatility Parameters
+atm_iv_baseline_ema_sec  = 300         ; EMA period for ATM IV baseline
+atm_iv_jump_vols_threshold = 3         ; Absolute jump in vols for IV spike alert
+skew_baseline_ema_sec    = 300         ; EMA period for Skew baseline
+skew_shift_vols_threshold  = 2         ; Absolute jump in vols for Skew shift alert
+
+[options_selection]
+weekly_expiries          = 4           ; Number of front-month weekly expiries to track
+monthly_expiries         = 2           ; Number of front-month serial monthly expiries to track
+
+[system]
+ws_queue_size            = 10000       ; Max size for internal asyncio.Queues
+ntp_max_offset_ms        = 100         ; Abort if local clock drift from NTP is greater than this
+log_level                = INFO        ; DEBUG, INFO, WARNING, ERROR, CRITICAL
