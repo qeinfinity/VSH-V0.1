@@ -1,0 +1,8 @@
+aiohttp
+pandas
+numpy
+influxdb-client
+python-dotenv
+ntplib
+orjson
+pytest
