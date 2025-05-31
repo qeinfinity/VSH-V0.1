@@ -12,7 +12,7 @@ class InfluxWriter:
         self.org = config.get('influxdb', 'org')
         self.bucket = config.get('influxdb', 'bucket')
         self.flush_interval_ms = config.getint('influxdb', 'flush_interval_ms', fallback=500)
-        self.client = None
+        self.client: InfluxDBClientAsync | None = None
         self.write_api = None
 
     async def connect(self):
@@ -23,12 +23,35 @@ class InfluxWriter:
 
     async def write_data_loop(self, input_storage_queue: asyncio.Queue):
         logger.info('InfluxDB writer loop starting...')
-        # TODO: Implement logic to consume data points (Influx line protocol strings or dicts)
-        # from input_storage_queue and write them in batches to InfluxDB
-        # using self.write_api.write(bucket=self.bucket, record=batch)
-        # Batching according to self.flush_interval_ms
-        await asyncio.sleep(1) # Placeholder
-        logger.warning('InfluxDB writer loop not fully implemented.')
+        if not self.write_api:
+            raise RuntimeError('InfluxWriter.connect() must be called before start')
+
+        flush_interval = self.flush_interval_ms / 1000.0
+        batch = []
+
+        while True:
+            try:
+                item = await asyncio.wait_for(input_storage_queue.get(), timeout=flush_interval)
+            except asyncio.TimeoutError:
+                item = None
+
+            if item is None:
+                if batch:
+                    await self.write_api.write(bucket=self.bucket, record=batch)
+                    batch.clear()
+                continue
+
+            if item == 'STOP':
+                break
+
+            batch.append(item)
+
+            if len(batch) >= 500:
+                await self.write_api.write(bucket=self.bucket, record=batch)
+                batch.clear()
+
+        if batch:
+            await self.write_api.write(bucket=self.bucket, record=batch)
 
     async def close(self):
         if self.write_api:
